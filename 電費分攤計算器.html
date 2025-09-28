@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>電費分攤計算器</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-4" x-data="feeCalc()">
+  <h3 class="mb-3">電費分攤計算器</h3>
+
+  <!-- 基本輸入 -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label class="form-label">總電費</label>
+      <input type="number" class="form-control" x-model.number="totalFee">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">基本費/人</label>
+      <input type="number" class="form-control" x-model.number="baseFee">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">天數</label>
+      <input type="number" class="form-control" x-model.number="days">
+    </div>
+  </div>
+
+  <h5>成員每日冷氣使用時數</h5>
+  <template x-for="(m, idx) in members" :key="idx">
+    <div class="row mb-2 align-items-center">
+      <div class="col-4">
+        <input type="text" class="form-control" placeholder="姓名" x-model="m.name">
+      </div>
+      <div class="col-4">
+        <input type="number" class="form-control" placeholder="小時/日" x-model.number="m.hours">
+      </div>
+      <div class="col-4 text-end">
+        <button class="btn btn-danger btn-sm" @click="removeMember(idx)">移除</button>
+      </div>
+    </div>
+  </template>
+  <button class="btn btn-primary mb-3" @click="addMember">新增成員</button>
+
+  <!-- 結果表格 -->
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>成員</th>
+        <th>冷氣使用(hr/日)</th>
+        <th>應付金額</th>
+      </tr>
+    </thead>
+    <tbody>
+      <template x-for="m in members" :key="m.name">
+        <tr>
+          <td x-text="m.name"></td>
+          <td x-text="m.hours"></td>
+          <td x-text="calcFee(m).toFixed(0) + ' 元'"></td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+
+  <div class="alert alert-info">
+    <strong>冷氣費率：</strong>
+    <span x-text="ratePerHour().toFixed(2) + ' 元 / hr/日'"></span>
+  </div>
+
+  <!-- 產生訊息 -->
+  <button class="btn btn-success mb-3" @click="generateMessage">產生文字訊息</button>
+
+  <div class="alert alert-secondary" style="white-space: pre-line;" x-text="message"></div>
+</div>
+
+<script>
+function feeCalc() {
+  return {
+    totalFee: 0,
+    baseFee: 500,
+    days: 62,
+    members: [
+      { name: "@黃睿緯👶🏻", hours: 8.39 },
+      { name: "@Hajikami", hours: 20 },
+      { name: "@高民", hours: 7 },
+      { name: "@家愷", hours: 0 }
+    ],
+    message: "",
+    addMember() {
+      this.members.push({ name: "", hours: 0 });
+    },
+    removeMember(idx) {
+      this.members.splice(idx, 1);
+    },
+    ratePerHour() {
+      let totalBase = this.baseFee * this.members.length;
+      let sharePool = this.totalFee - totalBase;
+      let totalHours = this.members.reduce((sum, m) => sum + m.hours, 0);
+      return totalHours > 0 ? sharePool / totalHours : 0;
+    },
+    calcFee(member) {
+      return this.baseFee + member.hours * this.ratePerHour();
+    },
+    generateMessage() {
+      let rate = this.ratePerHour().toFixed(2);
+      let lines = [];
+      lines.push(`7/11-9/10 本期共${this.days}天`);
+      lines.push(`遇到小數位都在小數第二位四捨五入`);
+      lines.push(`冷氣1hr/日費用: (${this.totalFee}-${this.baseFee}*${this.members.length})/(${this.members.map(m=>m.hours).join("+")})= 約${rate}元`);
+      lines.push(``);
+      lines.push(`本期電費(共${this.totalFee}元)：`);
+      this.members.forEach(m=>{
+        let airFee = (m.hours * this.ratePerHour()).toFixed(0);
+        let total = this.calcFee(m).toFixed(0);
+        lines.push(`${m.name}(${m.hours} hr/日): ${this.baseFee} + ${airFee} = ${total}元`);
+      });
+      this.message = lines.join("\n");
+    }
+  }
+}
+</script>
+</body>
+</html>
