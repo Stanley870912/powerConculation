@@ -104,7 +104,7 @@ function feeCalc() {
     generateMessage() {
       let rate = this.ratePerHour().toFixed(2);
       let lines = [];
-      lines.push(`7/11-9/10 本期共${this.days}天`);
+      lines.push(`本期共${this.days}天`);
       lines.push(`遇到小數位都在小數第二位四捨五入`);
       lines.push(`冷氣1hr/日費用: (${this.totalFee}-${this.baseFee}*${this.members.length})/(${this.members.map(m=>m.hours).join("+")})= 約${rate}元`);
       lines.push(``);
